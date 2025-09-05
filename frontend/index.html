@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCount - Smart Inspection System</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Animated Background -->
+        <div class="bg-animation">
+            <div class="scanner-line"></div>
+            <div class="grid-overlay"></div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-camera-retro"></i>
+                <h1>OptiCount</h1>
+                <span class="subtitle">Smart Factory Vision</span>
+            </div>
+            <div class="system-status">
+                <div class="status-indicator online" id="systemStatus">
+                    <span class="pulse"></span>
+                    <span class="status-text">SYSTEM ONLINE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Live Camera Feed Section -->
+            <section class="camera-section">
+                <div class="panel camera-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-video"></i> Live Camera Feed</h3>
+                        <div class="controls">
+                            <button class="btn btn-start" id="startBtn">
+                                <i class="fas fa-play"></i> START
+                            </button>
+                            <button class="btn btn-stop" id="stopBtn">
+                                <i class="fas fa-stop"></i> STOP
+                            </button>
+                            <button class="btn btn-calibrate" id="calibrateBtn">
+                                <i class="fas fa-crosshairs"></i> CALIBRATE
+                            </button>
+                        </div>
+                    </div>
+                    <div class="camera-container">
+                        <div class="camera-frame">
+                            <img id="videoFeed" alt="Camera Feed" style="width: 100%; height: 100%; object-fit: cover;">
+                            <canvas id="overlay"></canvas>
+                            <div class="scan-overlay">
+                                <div class="corner tl"></div>
+                                <div class="corner tr"></div>
+                                <div class="corner bl"></div>
+                                <div class="corner br"></div>
+                            </div>
+                        </div>
+                        <div class="camera-info">
+                            <div class="info-item">
+                                <span class="label">FPS:</span>
+                                <span class="value" id="fpsValue">30</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Resolution:</span>
+                                <span class="value">1920x1080</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics Panel -->
+            <section class="stats-section">
+                <div class="panel stats-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-chart-line"></i> Real-Time Analytics</h3>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card total-count">
+                            <div class="stat-icon">
+                                <i class="fas fa-cubes"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h4>Total Count</h4>
+                                <div class="stat-number" id="totalCount">0</div>
+                                <div class="stat-change positive">+12 today</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card quality-rate">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h4>Quality Rate</h4>
+                                <div class="stat-number" id="qualityRate">100.0%</div>
+                                <div class="stat-change positive">+2.1%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card defects">
+                            <div class="stat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h4>Defects Found</h4>
+                                <div class="stat-number" id="defectCount">0</div>
+                                <div class="stat-change negative">+1 recent</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card efficiency">
+                            <div class="stat-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h4>Efficiency</h4>
+                                <div class="stat-number" id="efficiency">95.5%</div>
+                                <div class="stat-change positive">+0.8%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detection Log -->
+            <section class="log-section">
+                <div class="panel log-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-list-alt"></i> Detection Log</h3>
+                        <button class="btn btn-clear" id="clearLog">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                    <div class="log-container" id="detectionLog">
+                        <div class="log-item passed">
+                            <div class="log-time">14:23:45</div>
+                            <div class="log-type">
+                                <i class="fas fa-check"></i> PASSED
+                            </div>
+                            <div class="log-details">Product #1247 - Size: 45.2mm x 32.1mm</div>
+                        </div>
+                        <div class="log-item failed">
+                            <div class="log-time">14:23:42</div>
+                            <div class="log-type">
+                                <i class="fas fa-times"></i> DEFECT
+                            </div>
+                            <div class="log-details">Product #1246 - Oversized: 48.7mm x 35.2mm</div>
+                        </div>
+                        <div class="log-item passed">
+                            <div class="log-time">14:23:39</div>
+                            <div class="log-type">
+                                <i class="fas fa-check"></i> PASSED
+                            </div>
+                            <div class="log-details">Product #1245 - Size: 44.8mm x 31.9mm</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Alert Notifications -->
+        <div class="alert-container" id="alertContainer"></div>
+    </div>
+
+    <!-- Calibration Modal -->
+    <div id="calibrationModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>🎯 Reference Object Calibration</h3>
+            <div class="calibration-form">
+                <div class="form-group">
+                    <label for="referenceWidth">Width (cm):</label>
+                    <input type="number" id="referenceWidth" step="0.1" min="0.1" value="5.0">
+                </div>
+                <div class="form-group">
+                    <label for="referenceHeight">Height (cm):</label>
+                    <input type="number" id="referenceHeight" step="0.1" min="0.1" value="3.0">
+                </div>
+                <div class="form-group">
+                    <label for="toleranceValue">Tolerance (±cm):</label>
+                    <input type="number" id="toleranceValue" step="0.1" min="0.1" value="0.3">
+                </div>
+                <div class="modal-buttons">
+                    <button id="saveCalibration" class="btn-primary">Save Calibration</button>
+                    <button id="closeModal" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/accurate_main.js"></script>
+</body>
+</html>
