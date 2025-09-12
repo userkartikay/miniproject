@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OptiCount - Smart Inspection System</title>
+    <title>OptiCount - Dual Camera Smart Inspection System</title>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -33,42 +33,74 @@
 
         <!-- Main Dashboard -->
         <main class="dashboard">
-            <!-- Live Camera Feed Section -->
+            <!-- Dual Camera Feed Section -->
             <section class="camera-section">
-                <div class="panel camera-panel">
-                    <div class="panel-header">
-                        <h3><i class="fas fa-video"></i> Live Camera Feed</h3>
-                        <div class="controls">
-                            <button class="btn btn-start" id="startBtn">
-                                <i class="fas fa-play"></i> START
-                            </button>
-                            <button class="btn btn-stop" id="stopBtn">
-                                <i class="fas fa-stop"></i> STOP
-                            </button>
-                            <button class="btn btn-calibrate" id="calibrateBtn">
-                                <i class="fas fa-crosshairs"></i> CALIBRATE
-                            </button>
+                <div class="dual-camera-container">
+                    <!-- Contour Detection Feed -->
+                    <div class="panel camera-panel">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-search"></i> Contour Detection</h3>
+                            <div class="controls">
+                                <button class="btn btn-start" id="startBtn">
+                                    <i class="fas fa-play"></i> START
+                                </button>
+                                <button class="btn btn-stop" id="stopBtn">
+                                    <i class="fas fa-stop"></i> STOP
+                                </button>
+                                <button class="btn btn-calibrate" id="calibrateBtn">
+                                    <i class="fas fa-crosshairs"></i> CALIBRATE
+                                </button>
+                            </div>
+                        </div>
+                        <div class="camera-container">
+                            <div class="camera-frame">
+                                <img id="videoFeedRaw" alt="Contour Detection Feed" style="width: 100%; height: 100%; object-fit: cover;">
+                                <canvas id="overlayRaw"></canvas>
+                                <div class="scan-overlay">
+                                    <div class="corner tl"></div>
+                                    <div class="corner tr"></div>
+                                    <div class="corner bl"></div>
+                                    <div class="corner br"></div>
+                                </div>
+                            </div>
+                            <div class="camera-info">
+                                <div class="info-item">
+                                    <span class="label">FPS:</span>
+                                    <span class="value" id="fpsValueRaw">30</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Resolution:</span>
+                                    <span class="value">1920x1080</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="camera-container">
-                        <div class="camera-frame">
-                            <img id="videoFeed" alt="Camera Feed" style="width: 100%; height: 100%; object-fit: cover;">
-                            <canvas id="overlay"></canvas>
-                            <div class="scan-overlay">
-                                <div class="corner tl"></div>
-                                <div class="corner tr"></div>
-                                <div class="corner bl"></div>
-                                <div class="corner br"></div>
-                            </div>
+                    
+                    <!-- Dimension Measurement Feed (Display Only) -->
+                    <div class="panel camera-panel">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-ruler-combined"></i> Dimension Measurement</h3>
                         </div>
-                        <div class="camera-info">
-                            <div class="info-item">
-                                <span class="label">FPS:</span>
-                                <span class="value" id="fpsValue">30</span>
+                        <div class="camera-container">
+                            <div class="camera-frame">
+                                <img id="videoFeedProcessed" alt="Measurement Feed" style="width: 100%; height: 100%; object-fit: cover;">
+                                <canvas id="overlay"></canvas>
+                                <div class="scan-overlay">
+                                    <div class="corner tl"></div>
+                                    <div class="corner tr"></div>
+                                    <div class="corner bl"></div>
+                                    <div class="corner br"></div>
+                                </div>
                             </div>
-                            <div class="info-item">
-                                <span class="label">Resolution:</span>
-                                <span class="value">1920x1080</span>
+                            <div class="camera-info">
+                                <div class="info-item">
+                                    <span class="label">FPS:</span>
+                                    <span class="value" id="fpsValue">30</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Resolution:</span>
+                                    <span class="value">1920x1080</span>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -183,17 +183,26 @@ body {
 /* Dashboard Layout */
 .dashboard {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: auto auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
     gap: 25px;
     grid-template-areas:
-        "camera stats"
-        "log log";
+        "cameras"
+        "stats"
+        "log";
 }
 
-.camera-section { grid-area: camera; }
+.camera-section { grid-area: cameras; }
 .stats-section { grid-area: stats; }
 .log-section { grid-area: log; }
+
+/* Dual Camera Container */
+.dual-camera-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    width: 100%;
+}
 
 /* Panel Styles */
 .panel {
@@ -409,7 +418,7 @@ body {
 /* Statistics Cards */
 .stats-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 15px;
     padding: 25px;
 }
@@ -589,9 +598,14 @@ body {
     .dashboard {
         grid-template-columns: 1fr;
         grid-template-areas:
-            "camera"
+            "cameras"
             "stats"
             "log";
+    }
+    
+    .dual-camera-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
     
     .stats-grid {
@@ -612,6 +626,11 @@ body {
     
     .logo h1 {
         font-size: 2rem;
+    }
+    
+    .dual-camera-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .stats-grid {

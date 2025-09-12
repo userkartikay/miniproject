@@ -20,6 +20,10 @@ class OptiCountBridge:
         self.defect_count = 0
         self.last_detection_time = 0
         
+        # Frame storage for dual feeds
+        self.raw_frame = None
+        self.processed_frame = None
+        
         # Initialize the model
         self.model = OptiCountModel()
         
@@ -68,18 +72,27 @@ class OptiCountBridge:
         # Process frame using the model
         processed_frame, detected_objects = self.model.process_frame(frame)
         
+        # Store frames for dual feed access
+        self.raw_frame = self.model.contour_frame if self.model.contour_frame is not None else frame.copy()
+        self.processed_frame = processed_frame.copy() if processed_frame is not None else frame.copy()
+        
         # Handle detection logging and statistics update (FIXED LOGIC)
         current_time = time.time()
         
         # If objects are detected, always update statistics but rate-limit logging
         if detected_objects:
+            print(f"DEBUG: Detected {len(detected_objects)} objects")  # Debug log
+            
             # Always update model statistics for each detection
             self.model.add_detection(detected_objects)
             
             # Rate-limit detailed logging to avoid spam
             if current_time - self.last_detection_time > 1.5:
+                print(f"DEBUG: Adding to detection log")  # Debug log
                 # Keep backend detection log for compatibility
-                for obj in detected_objects:
+                for i, obj in enumerate(detected_objects):
+                    print(f"DEBUG: Object {i+1}: {obj['width_cm']:.2f}x{obj['height_cm']:.2f}cm, Defect: {obj['is_defect']}")
+                    
                     detection = {
                         'timestamp': datetime.now().strftime('%H:%M:%S'),
                         'width_cm': obj['width_cm'],
@@ -105,6 +118,14 @@ class OptiCountBridge:
                 self.last_detection_time = current_time
         
         return processed_frame
+    
+    def get_raw_frame(self):
+        """Get raw camera frame with contours"""
+        return self.raw_frame if self.raw_frame is not None else None
+        
+    def get_processed_frame(self):
+        """Get processed frame with measurements"""
+        return self.processed_frame if self.processed_frame is not None else None
     
     def get_detection_data(self):
         # Get statistics from model and combine with detection log
@@ -134,6 +155,32 @@ def generate_frames():
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
         time.sleep(0.03)  # ~30 FPS
 
+def generate_raw_frames():
+    """Generate raw camera frames with contour detection"""
+    while opti_system.is_running:
+        opti_system.get_frame()  # Update frames
+        frame = opti_system.get_raw_frame()
+        if frame is not None:
+            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            if ret:
+                frame_bytes = buffer.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        time.sleep(0.03)  # ~30 FPS
+
+def generate_processed_frames():
+    """Generate processed frames with dimension measurements"""
+    while opti_system.is_running:
+        opti_system.get_frame()  # Update frames
+        frame = opti_system.get_processed_frame()
+        if frame is not None:
+            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            if ret:
+                frame_bytes = buffer.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        time.sleep(0.03)  # ~30 FPS
+
 @app.route('/api/start', methods=['POST'])
 def start_inspection():
     try:
@@ -154,7 +201,9 @@ def stop_inspection():
 
 @app.route('/api/data', methods=['GET'])
 def get_detection_data():
-    return jsonify(opti_system.get_detection_data())
+    result = opti_system.get_detection_data()
+    print(f"DEBUG: Sending detection data - Total: {result.get('total_count', 0)}, Detections: {len(result.get('detections', []))}")
+    return jsonify(result)
 
 @app.route('/api/calibrate', methods=['POST'])
 def calibrate_reference():
@@ -201,6 +250,24 @@ def video_feed():
         return jsonify({'error': 'Camera not started'}), 400
     
     return Response(generate_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/video_feed_raw')
+def video_feed_raw():
+    """Raw camera feed with contour detection"""
+    if not opti_system.is_running:
+        return jsonify({'error': 'Camera not started'}), 400
+    
+    return Response(generate_raw_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/video_feed_processed')
+def video_feed_processed():
+    """Processed feed with dimension measurements"""
+    if not opti_system.is_running:
+        return jsonify({'error': 'Camera not started'}), 400
+    
+    return Response(generate_processed_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/')

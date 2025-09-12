@@ -2,7 +2,8 @@
 class AccurateOptiCount {
     constructor() {
         this.baseURL = 'http://localhost:5000/api';
-        this.videoURL = 'http://localhost:5000/video_feed';
+        this.videoURLRaw = 'http://localhost:5000/video_feed_raw';
+        this.videoURLProcessed = 'http://localhost:5000/video_feed_processed';
         this.isRunning = false;
         this.dataUpdateInterval = null;
         
@@ -88,18 +89,34 @@ class AccurateOptiCount {
     }
 
     startVideoFeed() {
-        const videoElement = document.getElementById('videoFeed');
-        if (videoElement) {
-            videoElement.src = this.videoURL + '?t=' + Date.now();
-            videoElement.style.display = 'block';
+        // Start raw camera feed (contour detection)
+        const videoElementRaw = document.getElementById('videoFeedRaw');
+        if (videoElementRaw) {
+            videoElementRaw.src = this.videoURLRaw + '?t=' + Date.now();
+            videoElementRaw.style.display = 'block';
+        }
+        
+        // Start processed camera feed (dimension measurement)
+        const videoElementProcessed = document.getElementById('videoFeedProcessed');
+        if (videoElementProcessed) {
+            videoElementProcessed.src = this.videoURLProcessed + '?t=' + Date.now();
+            videoElementProcessed.style.display = 'block';
         }
     }
 
     stopVideoFeed() {
-        const videoElement = document.getElementById('videoFeed');
-        if (videoElement) {
-            videoElement.src = '';
-            videoElement.style.display = 'none';
+        // Stop raw camera feed
+        const videoElementRaw = document.getElementById('videoFeedRaw');
+        if (videoElementRaw) {
+            videoElementRaw.src = '';
+            videoElementRaw.style.display = 'none';
+        }
+        
+        // Stop processed camera feed
+        const videoElementProcessed = document.getElementById('videoFeedProcessed');
+        if (videoElementProcessed) {
+            videoElementProcessed.src = '';
+            videoElementProcessed.style.display = 'none';
         }
     }
 
