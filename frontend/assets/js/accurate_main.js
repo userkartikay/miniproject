@@ -162,21 +162,27 @@ class AccurateOptiCount {
         // Only update if we have valid data from the API
         if (data && typeof data === 'object') {
             if (data.total_count !== undefined) {
+                console.log('Updating total count from', this.getCurrentDisplayValue('totalCount'), 'to', data.total_count);
                 this.animateNumber('totalCount', data.total_count);
             }
             
             if (data.defect_count !== undefined) {
+                console.log('Updating defect count from', this.getCurrentDisplayValue('defectCount'), 'to', data.defect_count);
                 this.animateNumber('defectCount', data.defect_count);
             }
             
             if (data.quality_rate !== undefined) {
+                console.log('Updating quality rate from', this.getCurrentDisplayValue('qualityRate', '%'), 'to', data.quality_rate + '%');
                 this.animateNumber('qualityRate', data.quality_rate, '%');
                 this.updateQualityIndicator(data.quality_rate);
             }
             
             if (data.efficiency !== undefined) {
+                console.log('Updating efficiency from', this.getCurrentDisplayValue('efficiency', '%'), 'to', data.efficiency + '%');
                 this.animateNumber('efficiency', data.efficiency, '%');
             }
+        } else {
+            console.warn('Invalid or empty statistics data received:', data);
         }
     }
 
@@ -210,18 +216,37 @@ class AccurateOptiCount {
             const statusIcon = detection.is_defect ? '❌' : '✅';
             const status = detection.is_defect ? 'DEFECT' : 'PASS';
             
+            // Use tolerance from detection data if available, otherwise use current tolerance
+            const currentTolerance = detection.tolerance !== undefined ? detection.tolerance : this.tolerance;
+            
+            // Determine pass/fail status based on tolerance
+            const wExceedsTolerance = detection.w_diff > currentTolerance;
+            const hExceedsTolerance = detection.h_diff > currentTolerance;
+            
+            let toleranceStatus = '';
+            if (wExceedsTolerance && hExceedsTolerance) {
+                toleranceStatus = ' (Both dimensions exceed tolerance)';
+            } else if (wExceedsTolerance) {
+                toleranceStatus = ' (Width exceeds tolerance)';
+            } else if (hExceedsTolerance) {
+                toleranceStatus = ' (Height exceeds tolerance)';
+            }
+            
             logEntry.innerHTML = `
                 <div class="log-time">${detection.timestamp}</div>
-                <div class="log-status">${statusIcon} ${status}</div>
+                <div class="log-status">${statusIcon} ${status}${toleranceStatus}</div>
                 <div class="log-details">
                     <div class="size-info">
                         Measured: ${detection.width_cm?.toFixed(2)} × ${detection.height_cm?.toFixed(2)} cm
                     </div>
-                    <div class="reference-info">
-                        Reference: ${detection.reference_width?.toFixed(2)} × ${detection.reference_height?.toFixed(2)} cm
+                    <div class="target-info">
+                        Target: ${(detection.target_width || this.referenceWidth)?.toFixed(2)} × ${(detection.target_height || this.referenceHeight)?.toFixed(2)} cm
                     </div>
                     <div class="deviation-info">
                         Deviation: W±${detection.w_diff?.toFixed(2)}cm, H±${detection.h_diff?.toFixed(2)}cm
+                    </div>
+                    <div class="tolerance-info">
+                        Tolerance: ±${currentTolerance?.toFixed(2)}cm ${detection.is_defect ? '(EXCEEDED)' : '(WITHIN LIMITS)'}
                     </div>
                 </div>
             `;
@@ -232,19 +257,42 @@ class AccurateOptiCount {
 
     animateNumber(elementId, targetValue, suffix = '') {
         const element = document.getElementById(elementId);
-        if (!element) return;
+        if (!element) {
+            console.warn(`Element ${elementId} not found for animation`);
+            return;
+        }
         
-        const currentValue = parseFloat(element.textContent) || 0;
+        // Get current value, handling edge cases
+        let currentText = element.textContent || '0';
+        if (suffix) {
+            currentText = currentText.replace(suffix, '');
+        }
+        const currentValue = parseFloat(currentText) || 0;
+        
+        // If values are the same, no need to animate
+        if (currentValue === targetValue) {
+            return;
+        }
+        
+        console.log(`Animating ${elementId}: ${currentValue} → ${targetValue}${suffix}`);
+        
         const increment = (targetValue - currentValue) / 10;
-        
         let current = currentValue;
+        let steps = 0;
+        const maxSteps = 10;
+        
         const timer = setInterval(() => {
             current += increment;
-            if ((increment > 0 && current >= targetValue) || (increment < 0 && current <= targetValue)) {
+            steps++;
+            
+            if (steps >= maxSteps || 
+                (increment > 0 && current >= targetValue) || 
+                (increment < 0 && current <= targetValue)) {
                 current = targetValue;
                 clearInterval(timer);
             }
             
+            // Update display
             if (suffix === '%') {
                 element.textContent = current.toFixed(1) + suffix;
             } else {

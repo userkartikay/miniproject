@@ -6,11 +6,15 @@ from datetime import datetime
 
 class OptiCountModel:
     def __init__(self):
-        # Reference object dimensions (physical)
-        self.reference_object_w = 22    # cm (based on your original w_real)
-        self.reference_object_h = 28.23 # cm (based on your original h_real)
-        self.tolerance = 0.3  # cm tolerance for defect detection
-        self.scale = 10       # Scale factor for perspective transformation
+        # Reference object dimensions (physical frame/container)
+        self.reference_object_w = 22    # cm (frame width)
+        self.reference_object_h = 28.23 # cm (frame height)
+        
+        # Target object dimensions (objects we want to measure inside the frame)
+        self.target_object_w = 5.0      # cm (expected object width)
+        self.target_object_h = 3.0      # cm (expected object height)
+        self.tolerance = 0.3            # cm tolerance for defect detection
+        self.scale = 10                 # Scale factor for perspective transformation
         
         # Statistics tracking
         self.total_count = 0
@@ -158,9 +162,9 @@ class OptiCountModel:
                 w_obj = w / px_per_unit_w if px_per_unit_w != 0 else 0
                 h_obj = h / px_per_unit_h if px_per_unit_h != 0 else 0
                 
-                # Calculate deviations from reference object
-                w_diff = abs(w_obj - self.reference_object_w)
-                h_diff = abs(h_obj - self.reference_object_h)
+                # Calculate deviations from TARGET object (not reference frame)
+                w_diff = abs(w_obj - self.target_object_w)
+                h_diff = abs(h_obj - self.target_object_h)
                 
                 # Determine if object is defective
                 is_defect = w_diff > self.tolerance or h_diff > self.tolerance
@@ -170,6 +174,8 @@ class OptiCountModel:
                 obj_data = {
                     'width_cm': round(w_obj, 2),
                     'height_cm': round(h_obj, 2),
+                    'target_width': self.target_object_w,
+                    'target_height': self.target_object_h,
                     'reference_width': self.reference_object_w,
                     'reference_height': self.reference_object_h,
                     'w_diff': round(w_diff, 2),
@@ -233,12 +239,12 @@ class OptiCountModel:
                            (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
                 text_y += line_height
                 
-                # Reference dimensions
-                cv2.putText(measurement_frame, f"Reference: {self.reference_object_w:.2f} x {self.reference_object_h:.2f} cm", 
+                # Target dimensions (what we expect)
+                cv2.putText(measurement_frame, f"Target: {self.target_object_w:.2f} x {self.target_object_h:.2f} cm", 
                            (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
                 text_y += line_height
                 
-                # Deviation
+                # Deviation from target
                 cv2.putText(measurement_frame, f"Deviation: W±{w_diff:.2f}, H±{h_diff:.2f} cm", 
                            (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 0), 1)
                 text_y += line_height
@@ -258,10 +264,12 @@ class OptiCountModel:
             cv2.drawContours(measurement_frame, [big_contour], -1, (100, 100, 100), 2)
             
             # Add reference object info to contour frame
-            cv2.putText(contour_frame, f"Reference: {self.reference_object_w}x{self.reference_object_h}cm", 
+            cv2.putText(contour_frame, f"Frame: {self.reference_object_w}x{self.reference_object_h}cm", 
                        (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-            cv2.putText(contour_frame, f"Objects Inside: {len(detected_objects)}", 
+            cv2.putText(contour_frame, f"Target: {self.target_object_w}x{self.target_object_h}cm", 
                        (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+            cv2.putText(contour_frame, f"Objects Inside: {len(detected_objects)}", 
+                       (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
             
             # Add labels to identify the frames
             cv2.putText(contour_frame, "REFERENCE CONTOUR DETECTION", (10, 30), 
@@ -356,11 +364,19 @@ class OptiCountModel:
         return self.detection_log.copy()
 
     def calibrate(self, width, height, tolerance):
-        """Calibrate reference object dimensions"""
+        """Calibrate reference frame dimensions"""
         self.reference_object_w = width
         self.reference_object_h = height
         self.tolerance = tolerance
-        print(f"Calibrated reference object: {width}x{height}cm ±{tolerance}cm")
+        print(f"Calibrated reference frame: {width}x{height}cm ±{tolerance}cm")
+
+    def calibrate_target(self, width, height, tolerance=None):
+        """Calibrate target object dimensions (objects inside the frame)"""
+        self.target_object_w = width
+        self.target_object_h = height
+        if tolerance is not None:
+            self.tolerance = tolerance
+        print(f"Calibrated target object: {width}x{height}cm ±{self.tolerance}cm")
 
     def update_settings(self, **kwargs):
         """Update processing settings"""
@@ -368,6 +384,10 @@ class OptiCountModel:
             self.reference_object_w = kwargs['reference_object_w']
         if 'reference_object_h' in kwargs:
             self.reference_object_h = kwargs['reference_object_h']
+        if 'target_object_w' in kwargs:
+            self.target_object_w = kwargs['target_object_w']
+        if 'target_object_h' in kwargs:
+            self.target_object_h = kwargs['target_object_h']
         if 'tolerance' in kwargs:
             self.tolerance = kwargs['tolerance']
         print(f"Settings updated: {kwargs}")
